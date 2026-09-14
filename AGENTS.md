@@ -25,6 +25,24 @@ change. If the `opensrc` CLI is unavailable, install it with
 on a cache miss. Use the resolved source path for inspection, for example:
 `rg "pattern" $(opensrc path --cwd . <package>)`.
 
+## Project skills
+
+Project skills live in `.agents/skills/`. Read the matching skill before work
+in its area. Use the smallest set that covers the task.
+
+- `drizzle` — Drizzle schema, index, relation, query, and inferred-type work.
+- `neon` — Neon project setup, platform features, and serverless connections.
+- `neon-postgres` — Postgres schema design, migrations, queries, and database
+  operations on Neon.
+- `eve` — Eve agents, instructions, skills, tools, channels, connections,
+  sandboxes, subagents, schedules, and evaluations.
+- `technical-writing` — user-facing documentation and changes under `docs/`.
+- `unslop` — all prose written or edited in the repository.
+- `gh-pr-description` — pull request descriptions and reviewer-facing branch
+  summaries.
+- `thermo-nuclear-review` — explicit deep security and correctness reviews of
+  a branch or pull request.
+
 ## Product boundaries
 
 Build the personal Learning Coach defined in `docs/`. It is a single-user,

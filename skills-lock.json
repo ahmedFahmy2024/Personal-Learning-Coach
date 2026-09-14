@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "drizzle": {
+      "source": "lobehub/lobehub",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/drizzle/SKILL.md",
+      "computedHash": "df157c1768fee04925ae789f67120c80c7896c3a121a30076dfdba4ce51908ab"
+    },
     "eve": {
       "source": "vercel/eve",
       "sourceType": "github",
@@ -12,6 +18,18 @@
       "sourceType": "github",
       "skillPath": ".agents/skills/gh-pr-description/SKILL.md",
       "computedHash": "c658a2679e9cf12a018997db5a9ca7972fbe3899f71021e5587f6734dd251445"
+    },
+    "neon": {
+      "source": "neondatabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/neon/SKILL.md",
+      "computedHash": "ad03440e3144c39d12aff2b31d444a2aea072a7fa475e7fef1ee2edd183f5ed0"
+    },
+    "neon-postgres": {
+      "source": "neondatabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/neon-postgres/SKILL.md",
+      "computedHash": "2989af6804b11be25eb956dc0660ed503a3f4dd1c7a0b7bc8f3b5981e1db2270"
     },
     "technical-writing": {
       "source": "vercel/eve",
