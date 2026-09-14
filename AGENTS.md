@@ -8,91 +8,92 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-## OpenSrc reference
+# Learning Coach agent guide
 
-Before implementing a feature that uses Vercel Eve, consult the relevant current documentation at [opensrc.sh](https://opensrc.sh). Treat that documentation as the source of truth for Eve APIs, conventions, and configuration; use training-data knowledge only as context, not as an implementation authority.
+## Dependency reference
 
-Before using any dependency declared in `package.json`, inspect its source through OpenSrc at the version resolved for this project. If the `opensrc` CLI is unavailable, install it with `npm install -g opensrc`. Fetch an uncached dependency with `opensrc fetch --cwd . <package>`; `opensrc path --cwd . <package>` also fetches it on cache miss. Use the resolved source path in inspection commands, for example: `rg "pattern" $(opensrc path --cwd . <package>)`.
+Before implementing a feature that uses Eve, inspect the relevant current
+documentation and resolved package source with OpenSrc. Treat it as the source
+of truth for Eve APIs, conventions, and configuration; use model knowledge only
+as context.
 
-# 2. Workflow
+Before using a dependency declared in `package.json`, inspect its resolved
+source through OpenSrc when its documentation or behavior materially affects the
+change. If the `opensrc` CLI is unavailable, install it with
+`npm install -g opensrc`. Fetch an uncached dependency with
+`opensrc fetch --cwd . <package>`; `opensrc path --cwd . <package>` also fetches
+on a cache miss. Use the resolved source path for inspection, for example:
+`rg "pattern" $(opensrc path --cwd . <package>)`.
 
-For every implementation request:
+## Product boundaries
 
-1. Read `AGENTS.md`.
-2. Read the skills explicitly mentioned by the user.
-3. Read clearly needed supporting skills from the approved skill list.
-4. Inspect relevant code.
-5. Ask a focused question only if the task has meaningful ambiguity.
-6. Create a detailed prompt file in `prompts/`.
-7. Ask: `I prepared the implementation prompt at prompts/<file-name>.md. Is this good to execute?`
-8. Implement only after user approval.
-9. Run available checks.
-10. Share exact steps to test or run the completed feature.
+Build the personal Learning Coach defined in `docs/`. It is a single-user,
+browser-first app for study plans, short quizzes, and understandable feedback.
+The MVP uses local browser storage—there are no accounts, database, OAuth,
+external channels, scraping, uploads, background schedules, or paid services.
 
-Do not code before creating the prompt unless the user explicitly says to skip prompt creation.
+Read the relevant document before changing a related concern:
 
----
+- `docs/project-overview.md` — product scope and non-goals
+- `docs/architecture.md` — ownership, boundaries, and repository shape
+- `docs/ui-spec.md` — interface states and interaction rules
+- `docs/build-plan.md` — milestone sequence
+- `docs/code-standards.md` — implementation conventions
 
-# 3. Skills
+Those documents are the project source of truth. Update the owning document in
+the same change when a deliberate product or architecture decision changes.
 
-Use only these skills:
+## Workflow
 
-- `.agents/skills/clerk`
-- `.agents/skills/supabase`
-- `.agents/skills/oxylabs-web-scraper`
-- `.agents/skills/ai-sdk`
+1. Read this file, the relevant source-of-truth document, and the code that
+   owns the behavior.
+2. Read any user-named skill and the smallest applicable supporting skill.
+3. State material assumptions; ask one focused question only when a choice
+   would materially change the product or architecture.
+4. Implement the smallest coherent, accessible change within the current
+   milestone.
+5. Run the checks that cover the changed surface and report their real result.
+6. End with the outcome, changed files, and exact manual test steps.
 
-Use them for:
+Use a design note in `docs/` only for a durable decision that the existing
+source-of-truth documents cannot own. Do not create a `prompts/` directory or
+require a separate approval turn for ordinary implementation work.
 
-- `node_modules/next/dist/docs/`: Next.js, routing, server/client boundaries, API routes, UI patterns
-- `clerk`: authentication and protected routes
-- `supabase`: schema, migrations, queries, service role usage, dedupe, logs, pgvector
-- `oxylabs-web-scraper`: Oxylabs Web Scraper API, Scheduler, scheduled jobs, scraping behavior
-- `ai-sdk`: Vercel AI SDK and OpenAI provider usage, model calls, AI analysis output handling
+## Next.js and Eve
 
-Do not invent new skills.
+- Before changing Next.js code, read the relevant installed Next.js guide under
+  `node_modules/next/dist/docs/`, as required by the generated block above.
+- Before writing or changing Eve files, read the `eve` skill and inspect Eve
+  through OpenSrc. Once Eve is installed, also read
+  `node_modules/eve/docs/README.md` plus the applicable bundled guide.
+- Eve is not installed until Milestone 1. Do not create speculative Eve config
+  or routes before it is installed and its bundled docs are available.
+- Keep model credentials server-only. Use AI Gateway conservatively: bounded
+  outputs, short quizzes, one intentional model action per user interaction.
+- Agent instructions and skills govern tutoring behavior. TypeScript tools
+  handle validated, deterministic work such as quiz scoring.
 
-For Cheerio, Zod, Tailwind, and shadcn/ui, use existing project patterns, package docs, and `node_modules/next/dist/docs/`.
+## Implementation rules
 
----
+- Use TypeScript, App Router, and Tailwind already present in the project.
+- Default to Server Components; use Client Components only for browser state,
+  event handlers, or client hooks.
+- Treat `localStorage` as editable, untrusted browser data. Validate and
+  version persisted values before use.
+- Keep the initial agent least-privileged: no shell, file-write, web, connector,
+  subagent, or scheduling capability.
+- Build semantic, keyboard-accessible interfaces. Preserve typed text on an
+  error, make loading and streaming states clear, and do not use color as the
+  only correctness signal.
 
-# 4. Prompt files
+## Checks
 
-Prompt files live in the `prompts/` directory. Use names like:
+Run checks from the repository root. Select the smallest relevant set, and run
+the production build for route, configuration, server, or dependency changes:
 
-- `prompts/oxylabs-scraping.md`
-- `prompts/oxylabs-scheduler.md`
-- `prompts/ai-analysis.md`
-- `prompts/news-details-page-ui.md`
+- `pnpm exec tsc --noEmit` — TypeScript validation
+- `pnpm lint` — Biome checks
+- `pnpm build` — Next.js production build
 
-Each prompt must include:
-
-- goal
-- skills read
-- existing code inspected
-- decisions or assumptions
-- files likely to change
-- implementation requirements
-- security requirements
-- acceptance criteria
-- checks to run
-- exact manual test steps expected after implementation
-
-For UI tasks, also include visual interpretation, layout, typography, spacing, colors, responsiveness, and pixel-perfect expectations.
-
----
-
-# 22. Commands and checks
-
-"Run available checks" (sections 2 and 21) means running these from the project root and reporting the results:
-
-- `pnpm run typecheck` â€” TypeScript, no emit (`tsc --noEmit`)
-- `pnpm run lint` â€” ESLint (`eslint`)
-- `pnpm run build` â€” Next.js production build, only when the change could affect the build
-
-Development and runtime:
-
-- `pnpm run dev` â€” start the Next.js dev server; watch its terminal for scrape and analysis logs (section 17)
-- `pnpm run start` â€” run the production build locally after `pnpm run build`
-
-After implementation, run `typecheck` and `lint` at minimum. Add `build` when routes, config, or server modules changed. Report the exact command output; do not claim a check passed without running it.
+Use `pnpm dev` for local manual testing. Report only commands actually run and
+their result.
