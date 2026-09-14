@@ -108,3 +108,34 @@ export interface LearningSession {
   quizResult: QuizResult | null;
   messages: ChatMessage[];
 }
+
+/* -------------------------------------------------------------------------- */
+/* Database-backed views (Milestone 1)                                        */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * JSON-serializable projection of a `study_plans` row. Built on the server
+ * from the learner's own records and passed to client components as props —
+ * the client never queries the database directly.
+ */
+export interface StudyPlanSummary {
+  id: string;
+  topic: string;
+  goal: string;
+  availableMinutes: number;
+  totalMinutes: number;
+  steps: StudyPlanStep[];
+  /** ISO 8601 timestamp. */
+  createdAt: string;
+}
+
+/** JSON-serializable projection of the latest `quiz_attempts` row. */
+export interface QuizAttemptSummary {
+  id: string;
+  topic: string;
+  correctCount: number;
+  totalCount: number;
+  nextAction: string | null;
+  /** ISO 8601 timestamp. */
+  submittedAt: string;
+}

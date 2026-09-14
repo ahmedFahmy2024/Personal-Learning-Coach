@@ -3,7 +3,9 @@
  * `learning-coach.tsx`.
  *
  * Each starter action only fills the composer — it never sends on the learner's
- * behalf, so nothing is submitted before the text has been reviewed.
+ * behalf, so nothing is submitted before the text has been reviewed. Study
+ * plans are created through the plan form in the context panel; the saved
+ * records live in the database, not in this timeline.
  */
 
 interface EmptyStateProps {
@@ -13,21 +15,19 @@ interface EmptyStateProps {
 const STARTER_ACTIONS = [
   {
     label: "Create a plan",
-    description: "Turn a topic into short, realistic study sessions.",
+    description: "Use the plan form to save a topic, goal, and study time.",
     prompt:
-      "Create a study plan for the Spanish preterite tense. I can study about 30 minutes a day and I want to talk about last weekend confidently.",
+      "I want to create a study plan. My topic, goal, and available study time are in the plan form.",
   },
   {
     label: "Test me",
     description: "Practise with a short multiple-choice quiz.",
-    prompt:
-      "Test me with five multiple-choice questions on the Spanish preterite tense.",
+    prompt: "Test me with five multiple-choice questions on my topic.",
   },
   {
     label: "Explain a concept",
     description: "Get a plain-language explanation with examples.",
-    prompt:
-      "Explain when Spanish uses the preterite instead of the imperfect, with two short examples.",
+    prompt: "Explain one concept from my topic, with two short examples.",
   },
 ] as const;
 
@@ -37,8 +37,8 @@ export function EmptyState({ onSelectStarter }: EmptyStateProps) {
       <h2 className="text-base font-semibold">Start a study session</h2>
       <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-muted">
         Learning Coach turns one topic into a short study plan, quizzes you on
-        it, and explains what you missed. A sample session is loaded so the
-        panels have content — no model is connected yet, so replies are local
+        it, and explains what you missed. Save your first plan with the form in
+        the side panel — no model is connected yet, so chat replies are local
         placeholders.
       </p>
 

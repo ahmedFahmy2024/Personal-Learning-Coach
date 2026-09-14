@@ -4,19 +4,25 @@
  *
  * Uses the native `<dialog>` element so focus trapping, the inert backdrop, and
  * the Escape-to-close behaviour come from the platform rather than from
- * hand-written key handling (see `docs/code-standards.md`).
+ * hand-written key handling (see `docs/code-standards.md`). Confirming deletes
+ * the current browser profile's study plans and quiz attempts from the
+ * database; the anonymous profile itself is kept.
  */
 
 import { useEffect, useRef } from "react";
 
 interface ResetConfirmationDialogProps {
   open: boolean;
+  isResetting: boolean;
+  error: string | null;
   onDismiss: () => void;
   onConfirm: () => void;
 }
 
 export function ResetConfirmationDialog({
   open,
+  isResetting,
+  error,
   onDismiss,
   onConfirm,
 }: ResetConfirmationDialogProps) {
@@ -46,29 +52,37 @@ export function ResetConfirmationDialog({
     >
       <div className="p-5">
         <h2 id="reset-dialog-title" className="text-base font-semibold">
-          Reset local data?
+          Reset saved data?
         </h2>
         <p
           id="reset-dialog-description"
           className="mt-2 text-sm leading-relaxed text-muted"
         >
-          This deletes the conversation, plan, and quiz result saved in this
-          browser and restores the sample session. It cannot be undone.
+          This permanently deletes the study plans and quiz attempts stored in
+          the database for this browser profile. Your anonymous profile is kept,
+          and the conversation shown here is cleared. It cannot be undone.
         </p>
+        {error === null ? null : (
+          <p role="alert" className="mt-3 text-sm font-medium text-danger">
+            {error}
+          </p>
+        )}
         <div className="mt-5 flex flex-wrap justify-end gap-2">
           <button
             type="button"
             onClick={onDismiss}
-            className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:border-foreground"
+            disabled={isResetting}
+            className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:border-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
             Keep my data
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="rounded-full bg-danger px-3.5 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+            disabled={isResetting}
+            className="rounded-full bg-danger px-3.5 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Reset and restore sample
+            {isResetting ? "Resetting…" : "Delete my saved data"}
           </button>
         </div>
       </div>

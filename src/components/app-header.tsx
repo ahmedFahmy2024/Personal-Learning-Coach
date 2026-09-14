@@ -38,7 +38,7 @@ export function AppHeader({ topic, onResetRequest }: AppHeaderProps) {
           onClick={onResetRequest}
           className="ml-auto shrink-0 rounded-full border border-border px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:border-danger hover:text-danger"
         >
-          Reset local data
+          Reset saved data
         </button>
       </div>
     </header>
