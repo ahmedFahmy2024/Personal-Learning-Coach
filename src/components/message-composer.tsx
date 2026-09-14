@@ -9,7 +9,7 @@
 
 import type { KeyboardEvent, RefObject } from "react";
 
-export type ComposerStatus = "idle" | "sending";
+export type ComposerStatus = "idle" | "sending" | "streaming" | "resuming";
 
 interface MessageComposerProps {
   draft: string;
@@ -26,8 +26,26 @@ export function MessageComposer({
   onDraftChange,
   onSubmit,
 }: MessageComposerProps) {
-  const isSending = status === "sending";
-  const canSubmit = draft.trim().length > 0 && !isSending;
+  const isBusy = status !== "idle";
+  const canSubmit = draft.trim().length > 0 && !isBusy;
+
+  const submitLabel =
+    status === "sending"
+      ? "Sending…"
+      : status === "streaming"
+        ? "Streaming…"
+        : status === "resuming"
+          ? "Loading…"
+          : "Send";
+
+  const progressLabel =
+    status === "sending"
+      ? "Sending your message…"
+      : status === "streaming"
+        ? "The Learning Coach is replying…"
+        : status === "resuming"
+          ? "Loading the conversation…"
+          : "";
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (
@@ -77,13 +95,13 @@ export function MessageComposer({
           disabled={!canSubmit}
           className="rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isSending ? "Sending…" : "Send"}
+          {submitLabel}
         </button>
       </div>
 
       {/* Always mounted so assistive technology announces the change. */}
       <p aria-live="polite" className="mt-1 text-xs text-muted">
-        {isSending ? "Sending your message…" : ""}
+        {isBusy ? progressLabel : ""}
       </p>
     </form>
   );

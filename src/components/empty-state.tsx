@@ -38,8 +38,7 @@ export function EmptyState({ onSelectStarter }: EmptyStateProps) {
       <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-muted">
         Learning Coach turns one topic into a short study plan, quizzes you on
         it, and explains what you missed. Save your first plan with the form in
-        the side panel — no model is connected yet, so chat replies are local
-        placeholders.
+        the side panel, or send a message below to get a short streamed reply.
       </p>
 
       <h3 className="mt-5 text-xs font-semibold tracking-wide text-muted uppercase">

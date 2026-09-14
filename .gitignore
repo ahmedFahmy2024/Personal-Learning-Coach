@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# Eve local runtime state
+/.eve/
+
 # production
 /build
 

@@ -13,11 +13,14 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
+    "ai": "^7.0.99",
     "drizzle-orm": "^0.45.2",
+    "eve": "^0.54.5",
     "next": "16.3.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.2",

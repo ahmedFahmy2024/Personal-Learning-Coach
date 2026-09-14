@@ -3,28 +3,12 @@
  *
  * These describe browser-owned data (see `docs/architecture.md`), so every type
  * is plain and JSON-serializable: the same shapes travel from a Server
- * Component to the client island, into `localStorage`, and — from Milestone 2 —
- * through Eve tools.
+ * Component to the client island and into Eve tools.
+ *
+ * Conversation messages are Eve-owned from Milestone 2: the timeline renders
+ * the `EveMessage` projection from `eve/react`, and durable session state
+ * lives in the Eve runtime, not in these types.
  */
-
-/** Who produced a timeline message. */
-export type ChatRole = "learner" | "coach";
-
-/**
- * `placeholder` marks a locally generated reply that is shown until Eve is
- * connected, so the UI can label it honestly instead of implying that a model
- * answered. Milestone 1 replaces these with streamed agent messages.
- */
-export type ChatMessageKind = "message" | "placeholder";
-
-export interface ChatMessage {
-  id: string;
-  role: ChatRole;
-  kind: ChatMessageKind;
-  text: string;
-  /** ISO 8601 timestamp. */
-  createdAt: string;
-}
 
 export interface StudyPlanStep {
   id: string;
@@ -106,7 +90,6 @@ export interface LearningSession {
   studyPlan: StudyPlan | null;
   quiz: Quiz | null;
   quizResult: QuizResult | null;
-  messages: ChatMessage[];
 }
 
 /* -------------------------------------------------------------------------- */

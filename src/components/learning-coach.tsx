@@ -3,19 +3,20 @@
  *
  * `docs/code-standards.md` asks for `"use client"` only where browser state,
  * events, or hooks are needed, so this island owns the conversation draft, the
- * reset dialog, and the profile bootstrap — while study plans and quiz results
- * render from the server-provided database records and are never kept in
- * client state. Chat messages stay in memory only; Eve owns conversation
- * persistence from Milestone 2.
+ * Eve chat session, the reset dialog, and the profile bootstrap — while study
+ * plans and quiz results render from the server-provided database records and
+ * are never kept in client state. Conversation persistence is Eve-owned; the
+ * browser never stores the transcript or a learner ID.
  */
 
 "use client";
 
+import { useEveAgent } from "eve/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { ensureLearnerAction, resetProfileAction } from "@/app/actions";
 import { AppHeader } from "@/components/app-header";
-import { ChatTimeline } from "@/components/chat-timeline";
+import { ChatTimeline, eveMessageText } from "@/components/chat-timeline";
 import { ContextPanel } from "@/components/context-panel";
 import {
   type ComposerStatus,
@@ -23,21 +24,7 @@ import {
 } from "@/components/message-composer";
 import { ResetConfirmationDialog } from "@/components/reset-confirmation-dialog";
 import { StatusNotice } from "@/components/status-notice";
-import type {
-  ChatMessage,
-  QuizAttemptSummary,
-  StudyPlanSummary,
-} from "@/lib/types";
-
-/**
- * Stands in for the streamed Eve reply. Milestone 2 replaces this timer with a
- * real streamed agent response; until then it exists so the sending and
- * appended-reply states are demonstrable without a model.
- */
-const LOCAL_REPLY_DELAY_MS = 600;
-
-const PLACEHOLDER_REPLY =
-  "Placeholder reply — Eve is not connected yet. Milestone 2 replaces this with a streamed tutoring response. For now, everything you send stays in this browser.";
+import type { QuizAttemptSummary, StudyPlanSummary } from "@/lib/types";
 
 interface LearningCoachProps {
   /** The learner's own records from Neon Postgres, newest first. */
@@ -49,15 +36,11 @@ interface LearningCoachProps {
   needsProfile: boolean;
 }
 
-function createId(prefix: string): string {
-  if (
-    typeof crypto !== "undefined" &&
-    typeof crypto.randomUUID === "function"
-  ) {
-    return `${prefix}-${crypto.randomUUID()}`;
-  }
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-}
+const SEND_FAILED_MESSAGE =
+  "Could not reach the Learning Coach. Check your connection and try again — your message was kept.";
+
+const TURN_FAILED_MESSAGE =
+  "The reply was interrupted before it finished. Your message is still in the conversation — retry to ask again.";
 
 export function LearningCoach({
   initialPlans,
@@ -66,21 +49,40 @@ export function LearningCoach({
   needsProfile,
 }: LearningCoachProps) {
   const router = useRouter();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // Same-origin Eve routes (`/eve/v1/*`, mounted by `withEve`). No host, no
+  // credentials, and no learner ID leave the browser: the session is anonymous
+  // and lives only for this page lifetime.
+  const agent = useEveAgent();
   const [isDbErrorDismissed, setIsDbErrorDismissed] = useState(false);
   const [draft, setDraft] = useState("");
-  const [composerStatus, setComposerStatus] = useState<ComposerStatus>("idle");
+  const [sendError, setSendError] = useState<string | null>(null);
   const [isResetOpen, setIsResetOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
   const [isBootstrapping, startBootstrap] = useTransition();
 
   const composerRef = useRef<HTMLTextAreaElement>(null);
-  const replyTimerRef = useRef<number | null>(null);
   const bootstrapStartedRef = useRef(false);
 
   const activeTopic = initialPlans[0]?.topic ?? "No topic yet";
   const databaseAvailable = dbError === null;
+
+  const agentStatus = agent.status;
+  const isBusy =
+    agentStatus === "submitted" ||
+    agentStatus === "streaming" ||
+    agentStatus === "resuming";
+  const isStreaming = agentStatus === "streaming";
+  const isTurnFailed = agentStatus === "error";
+
+  const composerStatus: ComposerStatus =
+    agentStatus === "submitted"
+      ? "sending"
+      : agentStatus === "streaming"
+        ? "streaming"
+        : agentStatus === "resuming"
+          ? "resuming"
+          : "idle";
 
   // First visit: create the anonymous profile (server-set cookie plus
   // `learners` row), then reload the server records for this profile.
@@ -95,46 +97,44 @@ export function LearningCoach({
     });
   }, [needsProfile, router]);
 
-  // Abandon a pending placeholder reply if the island unmounts mid-flight.
-  useEffect(() => {
-    return () => {
-      if (replyTimerRef.current !== null) {
-        window.clearTimeout(replyTimerRef.current);
-      }
-    };
-  }, []);
-
-  function appendMessage(message: ChatMessage) {
-    setMessages((current) => [...current, message]);
+  async function sendText(text: string) {
+    setSendError(null);
+    try {
+      await agent.send(text);
+    } catch {
+      // The turn never started, so nothing reached the timeline: hand the
+      // exact text back to the composer instead of losing it.
+      setDraft(text);
+      setSendError(SEND_FAILED_MESSAGE);
+      composerRef.current?.focus();
+    }
   }
 
   function handleSubmit() {
     const text = draft.trim();
-    if (text.length === 0 || composerStatus === "sending") {
+    if (text.length === 0 || isBusy) {
       return;
     }
-
-    appendMessage({
-      id: createId("message"),
-      role: "learner",
-      kind: "message",
-      text,
-      createdAt: new Date().toISOString(),
-    });
     setDraft("");
-    setComposerStatus("sending");
+    void sendText(text);
+  }
 
-    replyTimerRef.current = window.setTimeout(() => {
-      appendMessage({
-        id: createId("message"),
-        role: "coach",
-        kind: "placeholder",
-        text: PLACEHOLDER_REPLY,
-        createdAt: new Date().toISOString(),
-      });
-      setComposerStatus("idle");
-      replyTimerRef.current = null;
-    }, LOCAL_REPLY_DELAY_MS);
+  function handleRetry() {
+    if (isBusy) {
+      return;
+    }
+    // Re-ask the most recent user message as a fresh turn.
+    const messages = agent.data.messages;
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const candidate = messages[index];
+      if (candidate.role === "user") {
+        const text = eveMessageText(candidate).trim();
+        if (text.length > 0) {
+          void sendText(text);
+          return;
+        }
+      }
+    }
   }
 
   function fillComposer(prompt: string) {
@@ -152,13 +152,9 @@ export function LearningCoach({
       setResetError(result.message);
       return;
     }
-    if (replyTimerRef.current !== null) {
-      window.clearTimeout(replyTimerRef.current);
-      replyTimerRef.current = null;
-    }
-    setMessages([]);
+    agent.reset();
     setDraft("");
-    setComposerStatus("idle");
+    setSendError(null);
     setIsResetOpen(false);
     router.refresh();
   }
@@ -191,7 +187,30 @@ export function LearningCoach({
               Setting up your anonymous profile…
             </p>
           ) : null}
-          <ChatTimeline messages={messages} onSelectStarter={fillComposer} />
+          <ChatTimeline
+            messages={agent.data.messages}
+            isStreaming={isStreaming}
+            onSelectStarter={fillComposer}
+          />
+          {sendError === null && !isTurnFailed ? null : (
+            <div
+              role="alert"
+              className="mt-3 rounded-card border border-danger/40 bg-danger-surface p-3 text-sm"
+            >
+              <p className="leading-relaxed">
+                <span className="font-semibold">Message not delivered: </span>
+                {sendError ?? TURN_FAILED_MESSAGE}
+              </p>
+              <button
+                type="button"
+                onClick={sendError === null ? handleRetry : handleSubmit}
+                disabled={isBusy}
+                className="mt-2 rounded-full border border-border bg-surface px-3 py-1 text-sm font-medium transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Retry
+              </button>
+            </div>
+          )}
           <div className="sticky bottom-0 z-10 mt-3 bg-background pt-1 pb-4 lg:static lg:pb-0">
             <MessageComposer
               draft={draft}
