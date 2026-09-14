@@ -7,7 +7,9 @@ provides the durable agent endpoint. The browser is the only user channel.
 
 ```text
 Browser UI
-  ├─ localStorage: active chat, plan, recent quiz results
+  ├─ HTTP-only cookie: anonymous learner ID
+  ├─ Next.js server actions and route handlers
+  │    └─ Neon Postgres through Drizzle ORM
   └─ same-origin Eve web-chat route
          ├─ instructions.md: tutoring identity and boundaries
          ├─ skills/: study-plan and quiz playbooks
@@ -21,7 +23,8 @@ Browser UI
 src/
   app/                  # Next.js pages and routes
   components/           # Presentational and interactive UI
-  lib/                  # Shared types and browser persistence helpers
+  db/                   # Drizzle schema, connection, migrations, repositories
+  lib/                  # Shared types and browser-safe helpers
 agent/
   instructions.md       # Eve agent identity and guardrails
   skills/               # On-demand Markdown playbooks
@@ -36,9 +39,9 @@ ships with the installed `eve` package. Do not guess its configuration.
 
 | Data | Owner | Persistence | Reason |
 | --- | --- | --- | --- |
-| Chat display state | Browser | `localStorage` | No account or database needed |
-| Study plan | Browser | `localStorage` | User can resume locally |
-| Quiz answers and score | Browser | `localStorage` | Scores are personal and local |
+| Anonymous learner ID | Server and browser | HTTP-only cookie | Scopes data without sign-in |
+| Study plan | Neon Postgres | `study_plans` table | Survives refresh and redeploys |
+| Quiz answers and score | Neon Postgres | `quiz_attempts` table | Keeps real attempt history |
 | Agent workflow/session state | Eve runtime | Eve-managed | Supports durable streamed sessions |
 | Model credentials | Server environment only | Vercel environment variables | Never expose credentials to the browser |
 
@@ -47,11 +50,16 @@ ships with the installed `eve` package. Do not guess its configuration.
 - The model may explain, plan, and write quiz content; it must not calculate a
   submitted score itself when the score tool can do so.
 - The score tool accepts validated choices and returns a reproducible result.
-- Browser persistence contains no secrets and must be treated as user-editable.
+- The server creates the learner ID and stores it in a secure, HTTP-only,
+  same-site cookie. Route handlers and server actions derive ownership from the
+  cookie. The client never supplies a learner ID.
+- `DATABASE_URL` remains server-only. The browser never receives a connection
+  string or database credentials.
 - The initial agent has no shell, file-write, web-browsing, connector, or
   subagent capability.
 
 ## Later, deliberately deferred
 
-Authentication plus a database can replace local storage when cross-device
-history becomes a goal. This is not part of the MVP.
+Authentication can add cross-device access later. It must replace the anonymous
+learner ID with an authenticated user ID before it exposes saved data across
+devices.

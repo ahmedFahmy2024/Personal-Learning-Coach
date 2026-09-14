@@ -9,7 +9,7 @@ learning project for Next.js and the Eve agent framework, not a public SaaS.
 ## MVP outcome
 
 A learner can open the app, start a chat with a tutoring agent, ask for a
-study plan or quiz, answer quiz questions, and see a session-level score.
+study plan or quiz, answer quiz questions, and return to saved progress.
 
 ## First-release capabilities
 
@@ -18,14 +18,14 @@ study plan or quiz, answer quiz questions, and see a session-level score.
    concise study plan.
 3. The agent creates multiple-choice quizzes for the selected topic.
 4. Deterministic application code calculates quiz scores.
-5. The browser preserves the active chat, plan, and recent quiz results with
-   `localStorage`.
+5. Neon Postgres stores study plans and quiz attempts for the learner's current
+   browser profile.
 
 ## Explicit non-goals
 
 - Accounts, login, and multi-user data.
-- A database, Redis, file uploads, external channels, or OAuth.
-- Long-term memory shared between devices.
+- Authentication, Redis, file uploads, external channels, or OAuth.
+- Cross-device access. The MVP has no sign-in system.
 - Autonomous actions, paid integrations, and background schedules.
 - Claims that generated content is academically authoritative.
 
@@ -39,10 +39,10 @@ study plan or quiz, answer quiz questions, and see a session-level score.
 
 ## Cost guardrails
 
-The application must work within Vercel Hobby and AI Gateway's current free
-allowance. The UI must keep messages short by default, cap generated quiz size,
-and expose no features that silently cause repeated model calls. No paid
-service is a requirement for the MVP.
+The application must work within Vercel Hobby, Neon's Free plan, and AI
+Gateway's current free allowance. The UI must keep messages short by default,
+cap generated quiz size, and expose no features that silently cause repeated
+model calls. No paid service is a requirement for the MVP.
 
 ## Document precedence
 

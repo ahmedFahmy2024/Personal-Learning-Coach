@@ -29,8 +29,9 @@ on a cache miss. Use the resolved source path for inspection, for example:
 
 Build the personal Learning Coach defined in `docs/`. It is a single-user,
 browser-first app for study plans, short quizzes, and understandable feedback.
-The MVP uses local browser storage—there are no accounts, database, OAuth,
-external channels, scraping, uploads, background schedules, or paid services.
+The MVP uses Neon Postgres with an anonymous browser profile. It has no
+accounts, OAuth, external channels, scraping, uploads, background schedules,
+or paid services.
 
 Read the relevant document before changing a related concern:
 
@@ -66,7 +67,7 @@ require a separate approval turn for ordinary implementation work.
 - Before writing or changing Eve files, read the `eve` skill and inspect Eve
   through OpenSrc. Once Eve is installed, also read
   `node_modules/eve/docs/README.md` plus the applicable bundled guide.
-- Eve is not installed until Milestone 1. Do not create speculative Eve config
+- Eve is not installed until Milestone 2. Do not create speculative Eve config
   or routes before it is installed and its bundled docs are available.
 - Keep model credentials server-only. Use AI Gateway conservatively: bounded
   outputs, short quizzes, one intentional model action per user interaction.
@@ -78,8 +79,9 @@ require a separate approval turn for ordinary implementation work.
 - Use TypeScript, App Router, and Tailwind already present in the project.
 - Default to Server Components; use Client Components only for browser state,
   event handlers, or client hooks.
-- Treat `localStorage` as editable, untrusted browser data. Validate and
-  version persisted values before use.
+- Keep database access in server-only modules. Read the anonymous learner ID
+  from the HTTP-only cookie. Never accept a learner ID from the client.
+- Treat any browser state as editable, untrusted data. Validate it before use.
 - Keep the initial agent least-privileged: no shell, file-write, web, connector,
   subagent, or scheduling capability.
 - Build semantic, keyboard-accessible interfaces. Preserve typed text on an

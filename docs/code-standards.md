@@ -16,6 +16,16 @@
 - Keep secrets in server-only environment variables.
 - Do not call an AI provider from a Client Component.
 
+## Database
+
+- Use Neon Postgres and Drizzle ORM for MVP application data.
+- Define schema changes in `src/db/schema.ts` and commit generated migrations.
+- Keep database access in server-only modules, server actions, or route
+  handlers.
+- Read the anonymous learner ID from the HTTP-only cookie on the server. Never
+  accept it from a form, URL, or client request body.
+- Query and mutate records through a learner-scoped repository function.
+
 ## Eve
 
 - Agent behavior belongs in `agent/instructions.md` and focused skills.
@@ -31,5 +41,5 @@
 
 ## Verification
 
-Before declaring a change complete, run the smallest relevant check and, for
-meaningful UI changes, manually exercise the affected interaction.
+Before declaring a change complete, run the smallest relevant check and
+manually exercise meaningful UI and data interactions.
